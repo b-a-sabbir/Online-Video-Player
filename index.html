@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Video Player</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      /* For Firefox */
+      input[type='range'] {
+        accent-color: #6366f1;
+      }
+    </style>
+  <link rel="stylesheet" href="/index.css">
+</head>
+  <body class="bg-gray-900 overflow-hidden">
+    <div class="flex flex-col md:flex-row h-screen bg-black text-white font-sans">
+      <main class="flex-1 flex flex-col bg-black relative">
+        
+        <!-- Video Player Container (initially hidden) -->
+        <div id="video-player-container" class="w-full h-full bg-black relative group hidden">
+          <video id="video-element" class="w-full h-full object-contain" ></video>
+          
+          <!-- Indicators -->
+          <div id="play-pause-indicator" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 p-4 bg-black/50 rounded-full transition-opacity duration-200 pointer-events-none opacity-0">
+          </div>
+
+          <div id="seek-indicator" class="absolute top-1/2 -translate-y-1/2 px-6 py-3 bg-black/50 rounded-lg text-white text-2xl font-bold transition-opacity duration-200 pointer-events-none opacity-0">
+          </div>
+
+          <div id="volume-indicator" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 px-6 py-3 bg-black/50 rounded-lg flex items-center gap-3 transition-opacity duration-200 pointer-events-none opacity-0">
+          </div>
+
+          <div id="speed-indicator" class="absolute top-4 left-1/2 -translate-x-1/2 px-4 py-2 bg-black/50 rounded-lg flex items-center gap-2 transition-opacity duration-200 pointer-events-none opacity-0">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 text-white"><polygon points="13 19 22 12 13 5 13 19"></polygon><polygon points="2 19 11 12 2 5 2 19"></polygon></svg>
+            <span class="font-bold text-white text-lg tracking-wider">2x</span>
+          </div>
+          
+          <!-- Click overlay for play/pause -->
+          <div id="click-overlay" class="absolute inset-0"></div>
+
+          <!-- Controls -->
+          <div id="controls-container" class="absolute bottom-0 left-0 right-0 px-4 pt-2 pb-4 bg-gradient-to-t from-black/70 to-transparent transition-opacity duration-300">
+            <div class="flex items-center gap-3 w-full text-sm font-mono text-white">
+                <input
+                    type="range"
+                    id="progress-bar"
+                    min="0"
+                    max="100"
+                    value="0"
+                    step="0.1"
+                    class="w-full h-1.5 bg-white/20 rounded-full appearance-none cursor-pointer"
+                />
+            </div>
+            <div class="flex items-center justify-between gap-4 text-white mt-2">
+              <div class="flex items-center gap-2">
+                <button id="prev-button" class="p-2 hover:bg-white/20 rounded-full transition-colors">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="19 20 9 12 19 4 19 20"></polygon><line x1="5" y1="19" x2="5" y2="5"></line></svg>
+                </button>
+                <button id="play-pause-button" class="p-2 hover:bg-white/20 rounded-full transition-colors">
+                  <svg id="play-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                  <svg id="pause-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
+                </button>
+                <button id="next-button" class="p-2 hover:bg-white/20 rounded-full transition-colors">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 4 15 12 5 20 5 4"></polygon><line x1="19" y1="5" x2="19" y2="19"></line></svg>
+                </button>
+                <div class="flex items-center gap-2 ml-4 group/volume">
+                    <button id="mute-button" class="p-2 hover:bg-white/20 rounded-full transition-colors"></button>
+                    <input 
+                        type="range" 
+                        id="volume-slider"
+                        min="0" 
+                        max="1" 
+                        step="0.05" 
+                        value="1"
+                        class="w-0 group-hover/volume:w-24 h-1.5 bg-white/20 rounded-full appearance-none cursor-pointer transition-all duration-300"
+                    />
+                </div>
+                <div class="ml-4 text-sm font-mono">
+                  <span id="current-time">00:00</span> / <span id="duration">00:00</span>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-2">
+                  <div class="group/speed flex items-center gap-2">
+                      <div class="relative w-24 hidden group-hover/speed:block">
+                          <input type="range" id="playback-rate-slider" min="0.5" max="2.5" step="0.25" value="1" class="w-full h-1.5 bg-white/20 rounded-full appearance-none cursor-pointer">
+                      </div>
+                      <span id="playback-rate-display" class="font-mono text-sm w-12 text-center cursor-pointer">1.00x</span>
+                  </div>
+                  <button id="playlist-toggle-button" class="p-2 hover:bg-white/20 rounded-full transition-colors">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+                  </button>
+                  <button id="fullscreen-button" class="p-2 hover:bg-white/20 rounded-full transition-colors">
+                      <svg id="fullscreen-enter-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>
+                      <svg id="fullscreen-exit-icon" class="hidden" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 0-2-2h-3M3 16h3a2 2 0 0 0 2-2v-3"></path></svg>
+                  </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Welcome Screen (initially visible) -->
+        <div id="welcome-screen" class="w-full h-full flex flex-col items-center justify-center text-center p-8">
+            <div class="max-w-md">
+                <svg class="w-24 h-24 text-indigo-500 mx-auto mb-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.91 11.672a.375.375 0 0 1 0 .656l-5.603 3.113a.375.375 0 0 1-.557-.328V8.887c0-.286.307-.466.557-.327l5.603 3.112Z" />
+                </svg>
+                <h1 class="text-4xl font-bold mb-2">Video Playlist Player</h1>
+                <p class="text-gray-400 mb-8">Select a local folder containing your video files to start watching.</p>
+                <button id="select-folder-button" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg transition-colors text-lg">
+                    Select Folder
+                </button>
+                <input type="file" id="file-input" webkitdirectory directory multiple class="hidden" />
+                <p class="text-xs text-gray-500 mt-4">All files are processed locally in your browser. Nothing is uploaded.</p>
+            </div>
+        </div>
+
+      </main>
+      
+      <!-- Playlist Sidebar (initially hidden) -->
+      <aside id="playlist-sidebar" class="w-full md:w-80 lg:w-96 bg-gray-800 flex-col h-screen hidden">
+        <div class="p-4 border-b border-gray-700">
+            <h2 class="text-lg font-bold">Playlist</h2>
+        </div>
+        <ul id="playlist-list" class="flex-1 overflow-y-auto">
+            <!-- Playlist items will be injected here by JavaScript -->
+        </ul>
+      </aside>
+    </div>
+    <script src="index.js"></script>
+  <script type="module" src="/index.tsx"></script>
+</body>
+</html>

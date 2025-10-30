@@ -1,0 +1,5 @@
+{
+  "name": "Copy of Video Player",
+  "description": "A YouTube-style video player built with React that allows users to load a local folder of videos into a playlist. Features custom controls, keyboard shortcuts, and a dark-themed, responsive UI.",
+  "requestFramePermissions": []
+}
